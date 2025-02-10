@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "../mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.myapp.cart.dao.ICartRepository">
+
+	<insert id="addCart">
+	<![CDATA[
+	    INSERT INTO carts (lecture_id, member_id)
+	    SELECT #{lectureId}, #{memberId}
+	    WHERE NOT EXISTS (
+	        SELECT 1 FROM carts WHERE lecture_id = #{lectureId} AND member_id = #{memberId}
+	    )
+	]]>
+	</insert>
+	
+	<select id="getCarts" resultType="com.example.myapp.cart.model.Cart">
+	    SELECT 
+	        c.cart_id AS cartId,
+	        c.lecture_id AS lectureId,
+	        c.member_id AS memberId,
+	        l.title,
+	        l.profile,
+	        l.price,
+	        l.status,
+	        l.limit_student AS limitStudent,
+	        l.deadline_time AS deadLineTime,
+	        (l.limit_student - (SELECT COUNT(*) FROM attends a WHERE a.lecture_id = l.lecture_id)) AS remaining
+	    FROM carts c
+	    JOIN lectures l ON c.lecture_id = l.lecture_id
+	    WHERE c.member_id = #{memberId}
+	</select>
+
+	
+	<delete id="deleteCart">
+	<![CDATA[
+		DELETE
+		FROM carts
+		WHERE member_id = #{memberId} AND cart_id = #{cartId}
+	]]>
+	</delete>
+	
+	<select id="getMemberIdbyCartId">
+		<![CDATA[
+		    SELECT member_id
+		    FROM carts
+		    WHERE cart_id = #{cartId}
+		]]> 
+	</select>
+	
+</mapper>

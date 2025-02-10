@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"../mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.myapp.qna.dao.IQnaRepository">
+
+	<insert id="insertQuestion" useGeneratedKeys="true" keyProperty="question.questionId">
+		INSERT INTO questions (
+			member_id, lecture_id, title, content, deleted, board_date
+		) VALUES (
+			#{writerId}, #{lectureId}, #{question.title}, #{question.content}, #{question.deleted}, #{question.date}
+		)
+	</insert>
+	
+	<insert id="insertQuestionImage">
+		INSERT INTO board_images (
+			question_id, member_id, lecture_id, url
+		) VALUES (
+			#{questionId}, #{memberId}, #{lectureId}, #{url}
+		)
+	</insert>
+	
+	<insert id="insertAnswer">
+		INSERT INTO answers (
+			question_id, member_id, lecture_id, content, reply_date
+		) VALUES (
+			#{questionId}, #{writerId}, #{lectureId}, #{answer.content}, #{answer.date}
+		)
+	</insert>
+	
+	<select id="getQuestionSummaries" parameterType="long" resultType="com.example.myapp.qna.model.QuestionSummary">
+		SELECT q.question_id AS questionId, q.title AS title, m.id AS writer, q.board_date AS date, 
+			(SELECT COUNT(*) FROM answers a WHERE a.question_id = q.question_id) AS answerCount
+		FROM questions q 
+		JOIN members m ON q.member_id = m.member_id
+		WHERE q.deleted = 0
+		ORDER BY board_date DESC
+	</select>
+
+	<select id="getQuestionDetail" parameterType="long" resultMap="QuestionDetailMap">
+		SELECT q.question_id, m.id, l.title AS lecture_title,
+			q.title AS question_title, q.content AS question_content, q.board_date AS question_date,
+			bi.url AS image_url
+		FROM questions q
+		JOIN members m ON q.member_id = m.member_id
+		JOIN lectures l ON q.lecture_id = l.lecture_id
+		LEFT JOIN board_images bi ON q.question_id = bi.question_id
+		WHERE q.question_id = #{questionId}
+	</select>
+
+	<resultMap id="QuestionDetailMap" type="com.example.myapp.qna.model.QuestionDetail">
+	    <id property="questionId" column="question_id"/>
+	    <result property="memberId" column="id"/>
+	    <result property="lectureTitle" column="lecture_title"/>
+	    <result property="questionTitle" column="question_title"/>
+	    <result property="questionContent" column="question_content"/>
+	    <result property="questionDate" column="question_date"/>
+	    <collection property="images" ofType="java.lang.String">
+	        <result column="image_url"/>
+	    </collection>
+	</resultMap>
+	
+	<select id="getAnswerDetails" parameterType="long" resultType="com.example.myapp.qna.model.AnswerDetail">
+		SELECT a.answer_id AS answerId, a.content AS content, reply_date AS date,
+			m.profile AS profile, m.id AS writerId
+		FROM answers a JOIN members m ON a.member_id = m.member_id
+		WHERE a.question_id = #{questionId}
+		ORDER BY a.reply_date
+	</select>
+	
+	<select id="getMemberIdByQuestionId" parameterType="long" resultType="long">
+		SELECT member_id AS memberId
+		FROM questions
+		WHERE question_id = #{question_id}
+	</select>
+	
+	<update id="updateQuestion">
+		UPDATE questions
+		SET title = #{title}, content = #{content}
+		WHERE question_id = #{questionId}
+	</update>
+	
+	<delete id="deleteQuestionImages">
+		DELETE FROM board_images WHERE question_id = #{questionId}
+	</delete>
+	
+	<update id="deleteQuestion" parameterType="long">
+		UPDATE questions
+		SET deleted = 1
+		WHERE question_id = #{questionId}
+	</update>
+	
+	<select id="getMemberIdByAnswerId" parameterType="long" resultType="long">
+		SELECT member_id AS memberId
+		FROM answers
+		WHERE answer_id = #{answerId}
+	</select>
+	
+	<update id="updateAnswer">
+		UPDATE answers
+		SET content = #{answerUpdateRequest.content}
+		WHERE answer_id = #{answerId}
+	</update>
+	
+	<update id="deleteAnswer" parameterType="long">
+		UPDATE answers
+		SET deleted = 1
+		WHERE answer_id = #{answerId}
+	</update>
+	
+	<select id="getQuestionTitle" parameterType="long">
+		SELECT title AS title
+		FROM questions
+		WHERE question_id = #{questionId}
+	</select>
+</mapper>

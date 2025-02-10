@@ -1,0 +1,405 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "../mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.myapp.lecture.dao.ILectureRepository">
+
+	<select id="getAllLectures" resultType="com.example.myapp.lecture.model.Lecture">
+	<![CDATA[
+        SELECT 
+            l.lecture_id AS lectureId,
+            l.member_id AS memberId,
+            l.title,
+            l.profile,
+            l.description,
+            l.description_pic AS descriptionPic,
+            l.category,
+            l.price,
+            l.status,
+            l.link,
+            l.likes,
+            l.limit_student AS limitStudent,
+            l.deadline_time AS deadlineTime,
+            l.lectures_date AS lecturesDate,
+            l.start_date AS startDate,
+            l.end_date AS endDate,
+            l.deleted,
+            GROUP_CONCAT(t.tag_name ORDER BY t.tag_name SEPARATOR ', ') AS tags,
+            (SELECT COUNT(a.member_id) FROM attends a WHERE a.lecture_id = l.lecture_id) AS enrolledStudents,
+            (l.limit_student - (SELECT COUNT(a.member_id) FROM attends a WHERE a.lecture_id = l.lecture_id)) AS leftSpace
+        FROM lectures l
+        LEFT JOIN lectures_tags lt ON l.lecture_id = lt.lecture_id
+        LEFT JOIN tags t ON lt.tag_id = t.tag_id
+        WHERE l.deleted = 0
+        GROUP BY l.lecture_id
+        ORDER BY l.lectures_date DESC;
+
+	]]>
+	</select>
+
+    <select id="getRankByDeadDateLectures" resultType="com.example.myapp.lecture.model.Lecture">
+	<![CDATA[
+        SELECT 
+            l.lecture_id AS lectureId,
+            l.member_id AS memberId,
+            l.title,
+            l.profile,
+            l.description,
+            l.description_pic AS descriptionPic,
+            l.category,
+            l.price,
+            l.status,
+            l.link,
+            l.likes,
+            l.limit_student AS limitStudent,
+            l.deadline_time AS deadlineTime,
+            l.lectures_date AS lecturesDate,
+            l.start_date AS startDate,
+            l.end_date AS endDate,
+            l.deleted,
+            GROUP_CONCAT(t.tag_name ORDER BY t.tag_name SEPARATOR ', ') AS tags,
+            (SELECT COUNT(a.member_id) FROM attends a WHERE a.lecture_id = l.lecture_id) AS enrolledStudents,
+            (l.limit_student - (SELECT COUNT(a.member_id) FROM attends a WHERE a.lecture_id = l.lecture_id)) AS leftSpace
+        FROM lectures l
+        LEFT JOIN lectures_tags lt ON l.lecture_id = lt.lecture_id
+        LEFT JOIN tags t ON lt.tag_id = t.tag_id
+        WHERE l.deleted = 0
+        GROUP BY l.lecture_id
+        ORDER BY l.deadline_time ASC
+        LIMIT 5;
+	]]>
+	</select>
+
+    <select id="getRankByLikeLectures" resultType="com.example.myapp.lecture.model.Lecture">
+    <![CDATA[
+        SELECT 
+            l.lecture_id AS lectureId,
+            l.member_id AS memberId,
+            l.title,
+            l.profile,
+            l.description,
+            l.description_pic AS descriptionPic,
+            l.category,
+            l.price,
+            l.status,
+            l.link,
+            l.likes,
+            l.limit_student AS limitStudent,
+            l.deadline_time AS deadlineTime,
+            l.lectures_date AS lecturesDate,
+            l.start_date AS startDate,
+            l.end_date AS endDate,
+            l.deleted,
+            GROUP_CONCAT(t.tag_name ORDER BY t.tag_name SEPARATOR ', ') AS tags,
+            (SELECT COUNT(a.member_id) FROM attends a WHERE a.lecture_id = l.lecture_id) AS enrolledStudents,
+            (l.limit_student - (SELECT COUNT(a.member_id) FROM attends a WHERE a.lecture_id = l.lecture_id)) AS leftSpace
+        FROM lectures l
+        LEFT JOIN lectures_tags lt ON l.lecture_id = lt.lecture_id
+        LEFT JOIN tags t ON lt.tag_id = t.tag_id
+        WHERE l.deleted = 0
+        GROUP BY l.lecture_id
+        ORDER BY l.likes ASC
+        LIMIT 5;
+
+    ]]>
+    </select>
+	<select id="checkLikeLectures" parameterType="map" resultType="Boolean">
+     <![CDATA[
+        SELECT EXISTS ( SELECT * FROM likes WHERE member_id = #{memberId} AND lecture_id = #{lectureId} )
+    ]]>
+	</select>
+
+    <update id="updateLikeLectures" parameterType="map" >
+     <![CDATA[
+        UPDATE lectures SET likes = likes + IF( #{exist} , -1 , +1 ) WHERE member_id = #{memberId} AND lecture_id = #{lectureId}
+    ]]>
+	</update>
+
+    <insert id="insertLikeLectures" parameterType="map">
+    <![CDATA[
+        INSERT INTO likes (member_id, lecture_id, like_status)
+        VALUES (#{memberId}, #{lectureId}, true)
+    ]]>
+	</insert>
+
+    <delete id="deleteLikeLectures" parameterType="map">
+     <![CDATA[
+        DELETE FROM likes WHERE member_id = #{memberId} AND lecture_id = #{lectureId}
+    ]]>
+	</delete>
+
+	<insert id="lectureFileUpload" parameterType="com.example.myapp.lecture.model.LectureFile">
+	<![CDATA[
+        INSERT INTO lecture_files (lecture_id, member_id, file_url)
+        VALUES (#{lectureId}, #{memberId}, #{fileUrl})
+    ]]>
+	</insert>
+
+	<update id="setRefundStatus" parameterType="com.example.myapp.lecture.model.LectureFile">
+	<![CDATA[
+        UPDATE attends
+        SET is_refundable = false
+        WHERE lecture_id = #{lectureId} AND member_id = #{memberId}
+    ]]>
+	</update>
+
+
+	<insert id="registerLectures" parameterType="com.example.myapp.lecture.model.Lecture" useGeneratedKeys="true" keyProperty="lectureId">
+	<![CDATA[
+		INSERT INTO lectures (
+            member_id, title, profile, description, description_pic, category, 
+            price, link	, limit_student, deadline_time, start_date, end_date
+        ) VALUES (
+            #{memberId}, #{title}, #{profileUrl}, #{description}, #{descriptionPicUrl}, #{category}, 
+            #{price}, #{link}, #{limitStudent}, #{deadlineTime}, #{startDate}, #{endDate}
+        )
+	]]>
+	</insert>
+
+<update id="updateLectures" parameterType="com.example.myapp.lecture.model.Lecture">
+        UPDATE lectures
+    <set>
+        <if test="title != null"> title = #{title}, </if>
+        <if test="profileUrl != null"> profile = #{profileUrl}, </if>
+        <if test="description != null"> description = #{description}, </if>
+        <if test="descriptionPicUrl != null"> description_pic = #{descriptionPicUrl}, </if>
+        <if test="category != null"> category = #{category}, </if>
+        <if test="price != null"> price = #{price}, </if>
+        <if test="status != null"> status = #{status}, </if>
+        <if test="link != null"> link = #{link}, </if>
+        <if test="limitStudent != null"> limit_student = #{limitStudent}, </if>
+        <if test="deadlineTime != null"> deadline_time = #{deadlineTime}, </if>
+        <if test="lecturesDate != null"> lectures_date = #{lecturesDate}, </if>
+        <if test="startDate != null"> start_date = #{startDate}, </if>
+        <if test="endDate != null"> end_date = #{endDate}, </if>
+        <if test="deleted != null"> deleted = #{deleted} </if>
+    </set>
+        WHERE lecture_id = #{lectureId} 
+</update>
+
+    <select id="checkCanRefund" parameterType="map" resultType="Boolean">
+    <![CDATA[
+        SELECT COUNT(*) 
+        FROM attends 
+        WHERE member_id = #{memberId} 
+        AND lecture_id = #{lectureId} 
+        AND is_refundable = 1
+    ]]>
+    </select>
+
+
+    <update id="payRefund" parameterType="map">
+    <![CDATA[
+        UPDATE pays 
+        SET refund_date = NOW(), 
+            status = 1
+        WHERE member_id = #{memberId} 
+        AND lecture_id = #{lectureId}
+    ]]>
+    </update>
+
+
+
+	<select id="getMemberIdById" parameterType="String" resultType="Long">
+  	<![CDATA[
+        SELECT member_id FROM members WHERE id = #{memberId}
+    ]]>
+	</select>
+
+
+    <delete id="deleteLectures" parameterType="map">
+    <![CDATA[
+        UPDATE lectures
+        SET deleted = true
+        WHERE lecture_id = #{lectureId} AND member_id = #{memberId}
+    ]]>
+    </delete>
+
+    <select id="getLectureDetail" parameterType="Long" resultType="com.example.myapp.lecture.model.Lecture">
+        <![CDATA[
+            SELECT 
+                l.lecture_id AS lectureId,
+                l.member_id AS memberId,
+                l.title,
+                l.profile,
+                l.description,
+                l.description_pic AS descriptionPic,
+                l.category,
+                l.price,
+                l.status,
+                l.link,
+                l.likes,
+                l.limit_student AS limitStudent,
+                l.deadline_time AS deadlineTime,
+                l.lectures_date AS lecturesDate,
+                l.start_date AS startDate,
+                l.end_date AS endDate,
+                l.deleted,
+                GROUP_CONCAT(t.tag_name ORDER BY t.tag_name SEPARATOR ', ') AS tags,
+                (SELECT COUNT(a.member_id) FROM attends a WHERE a.lecture_id = l.lecture_id) AS enrolledStudents,
+                (l.limit_student - (SELECT COUNT(a.member_id) FROM attends a WHERE a.lecture_id = l.lecture_id)) AS leftSpace
+            FROM lectures l
+            LEFT JOIN lectures_tags lt ON l.lecture_id = lt.lecture_id
+            LEFT JOIN tags t ON lt.tag_id = t.tag_id
+            WHERE l.deleted = 0 AND l.lecture_id = #{lectureId}
+            GROUP BY l.lecture_id
+            ORDER BY l.lectures_date DESC;
+        ]]>
+    </select>
+
+    <select id="getLectureMaxId" resultType="java.lang.Long">
+    <![CDATA[
+        SELECT MAX(lecture_id) FROM lectures
+    ]]>
+    </select>
+
+	<delete id="forceDeleteLecture">
+	<![CDATA[
+		DELETE FROM lectures WHERE lecture_id = #{lectureId}
+	]]>
+	</delete>
+	
+	<delete id="deleteAllLectures">
+	<![CDATA[
+		DELETE FROM lectures
+	]]>
+	</delete>
+
+    <select id="getLectureFiles" parameterType="Long" resultType="com.example.myapp.lecture.model.LectureFile">
+    <![CDATA[
+        SELECT file_url as fileUrl FROM lecture_files WHERE lecture_id = #{lectureId}
+    ]]>
+    </select>
+
+    <select id="getExistingTags" parameterType="Long" resultType="Long">
+    <![CDATA[
+        SELECT tag_id FROM lectures_tags WHERE lecture_id = #{lectureId}
+    ]]>
+    </select>
+
+    <insert id="insertLectureTags" parameterType="map">
+
+        INSERT INTO lectures_tags (lecture_id, tag_id)
+        VALUES 
+        <foreach collection="tagIds" item="tagId" separator=",">
+            (#{lectureId}, #{tagId})
+        </foreach>
+    </insert>
+
+    <delete id="deleteLectureTags" parameterType="map">
+        DELETE FROM lectures_tags
+        WHERE lecture_id = #{lectureId} 
+        AND tag_id IN 
+        <foreach collection="tagIds" item="tagId" separator="," open="(" close=")">
+            #{tagId}
+        </foreach>
+    </delete>
+
+    <insert id="buyLecture" parameterType="map">
+    <![CDATA[
+        INSERT INTO attends ( member_id , lecture_id ) VALUES ( #{ memberId } , #{ lectureId } )
+    ]]>
+    </insert>
+
+    <select id="checkBeforeBuyLecture" parameterType="map" resultType="boolean">
+    <![CDATA[
+        SELECT COUNT(*) > 0 FROM attends WHERE member_id = #{memberId} AND lecture_id = #{lectureId}
+    ]]>
+    </select>
+    
+	<select id="getSalesForMember" resultType="com.example.myapp.lecture.model.LectureRevenueDto">
+    <![CDATA[
+		SELECT 
+		    DATE_FORMAT(l.start_date, '%Y-%m') AS month, 
+		    l.lecture_id AS lectureId, 
+		    l.title AS title, 
+		    CASE WHEN l.status = true THEN '강의중' ELSE '강의 종료' END AS status,
+		    COALESCE(SUM(CASE WHEN p.status = false THEN p.price * 0.9 ELSE 0 END), 0) AS price
+		FROM lectures l
+		LEFT JOIN pays p ON l.lecture_id = p.lecture_id
+		WHERE 
+		    l.member_id = #{memberId}
+		    AND l.start_date BETWEEN DATE_FORMAT(DATE_SUB(NOW(), INTERVAL 6 MONTH), '%Y-%m-01') 
+		                         AND LAST_DAY(NOW())
+		GROUP BY month, l.lecture_id, l.title, l.status
+		ORDER BY price DESC;
+    ]]>
+    </select>
+
+
+    <insert id="insertPayLog" parameterType="map">
+        <![CDATA[
+            INSERT INTO pays (member_id, lecture_id, price) 
+            SELECT  #{memberId}, #{lectureId}, price 
+            FROM lectures
+            WHERE lecture_id = #{lectureId}
+        ]]>
+    </insert>
+    
+	
+	<select id="findTodayLectures" resultType="com.example.myapp.lecture.model.LectureScheduled">
+	<![CDATA[
+		SELECT
+		    m.email,
+		    GROUP_CONCAT(
+		        ll.title, ' (', 
+		        DATE_FORMAT(ll.start_time, '%H:%i'), ' ~ ', 
+		        DATE_FORMAT(ll.end_time, '%H:%i'), ')'
+		        SEPARATOR '\n'
+		    ) AS schedule
+		FROM lecture_lists ll
+		JOIN attends a ON ll.lecture_id = a.lecture_id
+		JOIN members m ON a.member_id = m.member_id
+		WHERE DATE(ll.start_time) = CURDATE()
+		GROUP BY m.email;
+	]]>	
+	</select>
+	
+	<select id="getLecturesStartingIn30Minutes" resultType="com.example.myapp.lecture.model.LectureReminderDto">
+	<![CDATA[
+		SELECT 
+		    m.email, 
+		    l.title AS title,
+		    DATE_FORMAT(ll.start_time, '%Y년 %c월 %e일 %p %l시 %i분') AS startTime,
+		    ll.link AS link,
+		    m.attend_id AS attendId,
+		    ll.meeting_id AS meetingId,
+		    ll.member_id AS teacherId
+		FROM attends a
+		JOIN members m ON a.member_id = m.member_id
+		JOIN lectures l ON a.lecture_id = l.lecture_id
+		JOIN lecture_lists ll ON l.lecture_id = ll.lecture_id
+		WHERE DATE_FORMAT(DATE_ADD(NOW(), INTERVAL 30 MINUTE), '%Y-%m-%d %H:%i') = DATE_FORMAT(ll.start_time, '%Y-%m-%d %H:%i');
+	]]>	
+	</select>
+
+    <insert id="insertLectureListByExcel" parameterType="com.example.myapp.lecture.model.LectureList">
+    <![CDATA[
+        INSERT
+            INTO lecture_lists
+            (lecture_id, member_id, title, description, start_time, end_time)
+            VALUES
+            (#{lecture_id}, #{member_id}, #{title}, #{description}, #{start_time}, #{end_time})
+    ]]>
+    </insert>
+	
+	<update id="updateMeetingInfo">
+	    UPDATE lecture_lists
+	    SET 
+	        meeting_id = CASE 
+	            <foreach collection="list" item="response">
+	                WHEN lecture_list_id = #{response.lectureListId} THEN #{response.meetingId}
+	            </foreach>
+	        END,
+	        link = CASE
+	            <foreach collection="list" item="response">
+	                WHEN lecture_list_id = #{response.lectureListId} THEN #{response.link}
+	            </foreach>
+	        END
+	    WHERE lecture_list_id IN 
+	    <foreach collection="list" item="response" open="(" separator="," close=")">
+	        #{response.lectureListId}
+	    </foreach>
+	</update>
+	
+</mapper>

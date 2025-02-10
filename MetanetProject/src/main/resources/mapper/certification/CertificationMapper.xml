@@ -1,0 +1,25 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "../mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.myapp.certification.dao.ICertificationRepository">
+	
+
+	<select id="getNameByUser" resultType="String">
+		SELECT name 
+		FROM members
+		WHERE member_id = #{memberUID}
+	</select>
+	
+	<select id="getCourseable" resultType="boolean">
+		SELECT is_coursable
+		FROM attends
+		WHERE lecture_id = #{lecture_id} and member_id = #{memberUID}
+	</select>	
+	
+	<select id="getLecutre_title" resultType="com.example.myapp.certification.dto.Certification">
+		SELECT title, start_date, end_date
+		FROM lectures
+		WHERE lecture_id =#{lecture_id}
+	</select>
+
+</mapper>

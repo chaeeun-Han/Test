@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "../mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.myapp.zoom.dao.IZoomRepository">
+    <!-- 출석 정보 삽입 또는 업데이트 -->
+    <insert id="upsertStudentAttendance">
+        INSERT INTO students (
+            member_id, lecture_list_id, enter_time, play_time, out_time, is_attend
+        )
+        SELECT
+            m.member_id,
+            ll.lecture_list_id,
+            ll.start_time AS enter_time,
+            TIMESTAMPDIFF(SECOND, ll.start_time, #{leaveTime}) AS play_time,
+            #{leaveTime} AS out_time,
+            CASE
+                WHEN TIMESTAMPDIFF(SECOND, ll.start_time, #{leaveTime}) >= 
+                     TIMESTAMPDIFF(SECOND, ll.start_time, ll.end_time) * 0.8 
+                THEN 1 ELSE 0 
+            END AS is_attend
+        FROM members m
+        JOIN lecture_lists ll ON ll.title = #{topic}
+        WHERE m.attend_id = #{email}
+        ON DUPLICATE KEY UPDATE
+            enter_time = VALUES(enter_time),
+            play_time = VALUES(play_time),
+            out_time = VALUES(out_time),
+            is_attend = VALUES(is_attend);
+    </insert>
+
+</mapper>

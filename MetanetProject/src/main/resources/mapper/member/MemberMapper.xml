@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "../mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.myapp.member.dao.IMemberRepository">
+
+	<insert id="insertMember" parameterType="com.example.myapp.member.model.Member">
+		<![CDATA[
+			INSERT INTO 
+				members (id, name, password, phone, email, role, deleted, birth, profile, bank) 
+			VALUES 
+				(#{id}, #{name}, #{password}, #{phone}, #{email}, #{role}, 0, #{birth}, #{profile}, #{bank})
+		]]>
+	</insert>
+
+	<select id="findById" resultType="com.example.myapp.member.model.Member">
+		SELECT * FROM members WHERE id = #{id}
+	</select>
+	
+	<select id="getPassword" parameterType="string" resultType="string">
+		<![CDATA[
+			SELECT password
+			FROM members
+			WHERE userid=#{userid}
+		]]>
+	</select>
+	
+	<select id="findByEmail" resultType="int">
+		SELECT COUNT(*) FROM members WHERE email = #{email}	
+	</select>
+	
+	<update id="setNewPw">
+		UPDATE members SET password = #{password} WHERE email = #{email}  		
+	</update>
+
+	<select id="getRoleById">
+		SELECT role FROM members WHERE id =#{id}	
+	</select>
+	
+	<update id="deleteMember">
+		UPDATE members SET deleted = 1 WHERE id =#{id}	
+	</update>
+
+	<select id="getMemberIdById" parameterType="string" resultType="long">
+		<![CDATA[
+			SELECT member_id
+			FROM members
+			WHERE id=#{memberId}
+		]]>
+	</select>
+	
+	<update id="resetEmail">
+		UPDATE members
+		(email) SET #{email}
+		WHERE member_id = #{memberUID}  
+	</update>
+
+	<select id="getAllMembers" resultType="com.example.myapp.member.model.MemberResponse">
+		<![CDATA[
+			SELECT member_id AS memberId, CONCAT(LEFT(phone, 4), '****', RIGHT(phone, 5)) AS phone, email, role, name
+			FROM members
+		]]>
+	</select>
+
+	<select id="getMembersByLecture" parameterType="Long" resultType="com.example.myapp.excel.model.MemberForExcel">
+		<![CDATA[
+			SELECT 
+				k.title,
+			    CONCAT(LEFT(l.phone, 4), '****', RIGHT(l.phone, 5)) AS phone, 
+			    l.email, 
+			    l.name
+			FROM members l
+			LEFT JOIN attends m ON m.member_id = l.member_id
+			LEFT JOIN lectures k ON m.lecture_id = k.lecture_id
+			WHERE m.lecture_id = #{lectureId};
+		]]>
+	</select>
+	
+	<delete id="forceDeleteMember">
+		<![CDATA[
+			DELETE
+			FROM members
+			WHERE member_id = ${memberId}
+		]]>
+	</delete>
+	
+	<delete id="deleteAllMembers">
+		<![CDATA[
+	        DELETE FROM members
+        	WHERE role <> 'admin'
+		]]>
+	</delete>
+	
+	<select id="getIdByMemberId" resultType="string">
+		SELECT id
+		FROM members
+		WHERE member_id = #{memberUID}
+	</select>
+	
+	<select id="getAttendIdById" resultType="string">
+		SELECT attend_id AS attendId
+		FROM members
+		WHERE member_id = #{memberUID}
+	</select>
+</mapper>

@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="'[알림] 곧 시작하는 강의: ' + ${lectures.title} + ' 일정'"></title>
+</head>
+<body>
+    <h2>오늘의 강의 일정입니다.</h2>
+    <p>안녕하세요,</p>
+    <p><strong th:text="${lectures.title}"></strong> 강의가 곧 시작됩니다.</p>
+    <p>⏰ 시작 시간: <span th:text="${lectures.startTime}"></span></p>
+    <p>🔗 강의 링크: <a th:href="${lectures.link}" target="_blank">강의 입장하기</a></p>
+    <p>지각하지 않도록 준비해주세요!</p>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "../mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.myapp.account.dao.IAccountRepository">
+
+	<select id="getLecture" resultType="com.example.myapp.account.model.AccountLecture">
+		SELECT l.title, l.profile, l.category
+		FROM lectures l
+		JOIN attends a ON l.lecture_id = a.lecture_id
+		WHERE a.member_id =#{memberId}
+	</select>	
+	
+	<insert id="insertCategory">
+		INSERT INTO members_tags (member_id, tag_id)
+		VALUES (#{memberId}, (SELECT tag_id FROM tags WHERE tag_name = #{tagName}));
+	</insert>
+	
+	<update id="updateProfile">
+		UPDATE members
+		SET profile = #{fileUrl}
+		WHERE member_id = #{memberUID}
+	</update>
+	
+	<select id="getMyPage" resultType="com.example.myapp.member.model.Member">
+		SELECT * FROM members WHERE member_id = #{memberUID}
+	</select>	
+	
+	<select id="getLectureIdById" resultType="String">
+		SELECT lecture_id FROM 	attends
+		WHERE member_id = #{memberUID}
+	</select>
+	
+	<select id="getLectureTitleById" resultType="String">
+		SELECT title FROM lectures
+		WHERE lecture_id = #{lectureId}
+	</select>
+	
+	
+	<select id="getAllLectureCount" resultType="int">
+		SELECT COUNT(*)
+		FROM lecture_lists
+		WHERE lecture_id = #{lectureId}
+	</select>
+	
+	
+	<select id="getLectureListId" resultType="String">
+		SELECT lecture_list_id
+		FROM lecture_lists
+		WHERE lecture_id = #{lectureId}
+	</select>
+	
+	<select id="getCountAttendLecture" resultType="int">
+		SELECT COUNT(*)
+		FROM students
+		WHERE member_id =#{memberUID} AND enter_time is not NULL AND lecture_list_id =#{lecture_list_id}
+	</select>
+	
+	
+	<select id="getLectureDetailTile" resultType="String">
+		SELECT title
+		FROM lecture_lists
+		WHERE lecture_list_id = #{lecture_list_id};	
+	</select>
+	
+	<select id="getAllAttendTime" resultType="int">
+		SELECT TIMESTAMPDIFF(SECOND, start_time, end_time) AS duration_in_seconds
+		FROM  lecture_lists
+		WHERE lecture_list_id = #{lecture_list_id};
+	</select>
+	
+	<select id="getPlayTime" resultType="java.lang.Integer">
+	    SELECT IFNULL(play_time, 0)
+	    FROM students
+	    WHERE lecture_list_id = #{lecture_list_id} AND member_id = #{memberUID} AND play_time IS NOT NULL
+	</select>
+	
+	<select id="getDueToLecture" resultType="com.example.myapp.account.model.DueToLecture">
+	<![CDATA[
+	    SELECT title, start_time, end_time
+	    FROM lecture_lists
+	    WHERE member_id = #{memberUID} AND start_time > #{formattedNow};	    
+	 ]]>
+	</select>
+ 
+	<select id="getIngLectures" resultType="com.example.myapp.account.model.IngLecture">
+	<![CDATA[
+	    SELECT title, start_time, end_time, lecture_list_id, #{attendPercent}
+	    FROM lecture_lists
+	    WHERE member_id = #{memberUID} AND finished = false AND lecture_list_id = #{lectureListId};	    
+	 ]]>	
+	</select>
+
+	<select id="getLectureListIdFalse" resultType="String">
+		SELECT lecture_list_id
+		FROM lecture_lists
+		WHERE lecture_id = #{lectureId} AND finished = false
+	</select>
+	
+	
+	<select id="getAllStudent" resultType="int">
+		SELECT COUNT(*)
+		FROM students
+		WHERE lecture_list_id = #{lecutre_list_id}
+	</select>
+	
+	<select id="getNoAttendStudent" resultType="int">
+		SELECT COUNT(*)
+		FROM students
+		WHERE lecture_list_id = #{lecutre_list_id} AND enter_time is null
+	</select>
+	
+	<select id="getLectureIdByTeacherId" resultType="String">
+		SELECT lecture_id FROM 	lecture_lists
+		WHERE member_id = #{memberUID}
+	</select>
+	
+	<select id="getLectureListIdTrue" resultType="String">
+		SELECT lecture_list_id
+		FROM lecture_lists
+		WHERE lecture_id = #{lectureId} AND finished = true
+	</select>
+	
+</mapper>
